@@ -36,7 +36,7 @@ export default function Home() {
   const [parsing, setParsing] = useState(false);
   const [parseProgress, setParseProgress] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<{ stop: () => void } | null>(null);
 
   useEffect(() => {
     fetchEntries();
