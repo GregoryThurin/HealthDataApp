@@ -32,6 +32,7 @@ You work with a lot of iterations so that actual visibility of the state of the 
 - Do not add features beyond what is asked
 - Do not add comments unless logic is non-obvious
 - Do not install packages without checking what's already installed
+- When something fails, assume the mistake is yours first before blaming external factors
 
 ## Functional details
 TBD — to be filled in as the project description is provided.

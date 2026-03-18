@@ -1,13 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import db from "@/lib/db";
 import { parseEntry } from "@/lib/parse-entry";
+import { auth } from "@/auth";
 
 export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const session = await auth();
+  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const userId = (session.user as any).id;
+
   const { id } = await params;
 
   const result = await db.execute({
-    sql: "SELECT * FROM entries WHERE id = ?",
-    args: [id],
+    sql: "SELECT * FROM entries WHERE id = ? AND user_id = ?",
+    args: [id, userId],
   });
 
   const entry = result.rows[0];

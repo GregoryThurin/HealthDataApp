@@ -1,21 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import db from "@/lib/db";
 import { parseEntry } from "@/lib/parse-entry";
+import { auth } from "@/auth";
 
 export async function POST(req: NextRequest) {
+  const session = await auth();
+  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const userId = (session.user as any).id;
+
   const body = await req.json();
   const transcript = typeof body.transcript === "string" ? body.transcript.trim() : null;
-
-  if (!transcript) {
-    return NextResponse.json({ error: "transcript is required" }, { status: 400 });
-  }
+  if (!transcript) return NextResponse.json({ error: "transcript is required" }, { status: 400 });
 
   const recorded_at = new Date().toISOString();
   const id = crypto.randomUUID();
 
   await db.execute({
-    sql: "INSERT INTO entries (id, transcript, recorded_at) VALUES (?, ?, ?)",
-    args: [id, transcript, recorded_at],
+    sql: "INSERT INTO entries (id, transcript, recorded_at, user_id) VALUES (?, ?, ?, ?)",
+    args: [id, transcript, recorded_at, userId],
   });
 
   let parsed = false;
@@ -25,15 +27,7 @@ export async function POST(req: NextRequest) {
       await db.execute({
         sql: `INSERT INTO structured_events (id, entry_id, occurred_at, description, type, circumstances, tags)
               VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        args: [
-          crypto.randomUUID(),
-          id,
-          e.occurred_at ?? recorded_at,
-          e.description,
-          e.type,
-          e.circumstances ?? null,
-          JSON.stringify(e.tags),
-        ],
+        args: [crypto.randomUUID(), id, e.occurred_at ?? recorded_at, e.description, e.type, e.circumstances ?? null, JSON.stringify(e.tags)],
       });
     }
     parsed = true;
@@ -45,9 +39,14 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET() {
-  const entriesResult = await db.execute(
-    "SELECT id, transcript, recorded_at FROM entries ORDER BY recorded_at DESC"
-  );
+  const session = await auth();
+  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const userId = (session.user as any).id;
+
+  const entriesResult = await db.execute({
+    sql: "SELECT id, transcript, recorded_at FROM entries WHERE user_id = ? ORDER BY recorded_at DESC",
+    args: [userId],
+  });
 
   const eventsResult = await db.execute(
     "SELECT * FROM structured_events ORDER BY occurred_at ASC"
