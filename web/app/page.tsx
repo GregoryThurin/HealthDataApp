@@ -61,7 +61,7 @@ export default function Home() {
     recognition.interimResults = true;
     recognition.lang = "fr-FR";
 
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
+    recognition.onresult = (event: any) => {
       let full = "";
       for (let i = 0; i < event.results.length; i++) {
         full += event.results[i][0].transcript;
@@ -69,7 +69,7 @@ export default function Home() {
       setTranscript(full);
     };
 
-    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+    recognition.onerror = (event: any) => {
       setError(`Recognition error: ${event.error}`);
       setRecording(false);
     };
