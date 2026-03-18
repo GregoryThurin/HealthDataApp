@@ -49,7 +49,7 @@ export default function Home() {
 
   function startRecording() {
     const SpeechRecognition =
-      window.SpeechRecognition || (window as any).webkitSpeechRecognition;
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
       setError("Speech recognition is not supported in this browser. Use Chrome.");
